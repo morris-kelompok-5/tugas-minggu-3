@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "D:\FramworkCpp\MorisPython\JAGJAG-APP\main.py", line 141, in <module>
+    _start()
+    ~~~~~~^^
+  File "D:\FramworkCpp\MorisPython\JAGJAG-APP\main.py", line 54, in _start
+    from content.page.Manager.page import Manager
+  File "D:\FramworkCpp\MorisPython\JAGJAG-APP\content\page\Manager\page.py", line 10, in <module>
+    from content.page.Profile.page import Profile
+  File "D:\FramworkCpp\MorisPython\JAGJAG-APP\content\page\Profile\page.py", line 339, in <module>
+    Builder.load_file(Paths.file("page", "Profiles", "page.kv"))
+                      ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\FramworkCpp\MorisPython\JAGJAG-APP\content\util\paths.py", line 50, in file
+    raise FileNotFoundError(f"File tidak ditemukan: {path}")
+FileNotFoundError: File tidak ditemukan: D:\FramworkCpp\MorisPython\JAGJAG-APP\content\page\Profiles\page.kv

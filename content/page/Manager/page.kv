@@ -1,0 +1,29 @@
+#:import MDSharedAxisTransition kivymd.uix.transition.MDSharedAxisTransition
+
+<Manager>:
+    md_bg_color: app.theme_cls.backgroundColor
+
+    MDScreenManager:
+        id: screen_manager
+        size_hint: 1, 1
+        pos_hint: {"x": 0, "y": 0}
+        transition: MDSharedAxisTransition(transition_axis="x", duration=0.2)
+
+        Home:
+            name: "Home"
+        Map:
+            name: "Map"
+        Record:
+            name: "Record"
+        Time:
+            name: "Time"
+        Profile:
+            name: "Profile"
+
+    NavBar:
+        id: navbar
+        size_hint_y: None
+        pos_hint: {"x": 0, "y": 0}
+        on_switch_tabs:
+            if screen_manager.has_screen(args[3]): \
+            screen_manager.current = args[3]

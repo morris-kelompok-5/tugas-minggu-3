@@ -1,0 +1,311 @@
+# ======================= Chip jam =======================
+<TimeChip>:
+    adaptive_size: True
+    padding: [dp(10), dp(6), dp(12), dp(6)]
+    spacing: dp(4)
+    radius: [dp(16)]
+    theme_bg_color: "Custom"
+    md_bg_color: "#FCE2CF"
+
+    MDIcon:
+        icon: "clock-outline"
+        adaptive_size: True
+        pos_hint: {"center_y": .5}
+        theme_text_color: "Custom"
+        text_color: "#D87945"
+        theme_font_size: "Custom"
+        font_size: dp(16)
+
+    MDLabel:
+        text: root.text
+        bold: True
+        adaptive_size: True
+        pos_hint: {"center_y": .5}
+        theme_text_color: "Custom"
+        text_color: "#49372D"
+
+
+# ======================= Kartu jadwal =======================
+<ScheduleCard>:
+    orientation: "vertical"
+    adaptive_height: True
+    padding: dp(16)
+    spacing: dp(12)
+    radius: [dp(20)]
+    theme_bg_color: "Custom"
+    md_bg_color: "#F5EBDD"
+
+    MDBoxLayout:
+        adaptive_height: True
+        spacing: dp(12)
+
+        MDRelativeLayout:
+            size_hint: None, None
+            size: dp(44), dp(44)
+            pos_hint: {"center_y": .5}
+            radius: [dp(22)]
+            theme_bg_color: "Custom"
+            md_bg_color: "#FCE2CF"
+
+            MDIcon:
+                icon: "silverware-fork-knife"
+                adaptive_size: True
+                pos_hint: {"center_x": .5, "center_y": .5}
+                theme_text_color: "Custom"
+                text_color: "#D87945"
+
+        MDBoxLayout:
+            orientation: "vertical"
+            adaptive_height: True
+            pos_hint: {"center_y": .5}
+
+            MDLabel:
+                text: root.title
+                font_style: "Title"
+                role: "medium"
+                adaptive_height: True
+                theme_text_color: "Custom"
+                text_color: "#49372D"
+
+            MDLabel:
+                text: str(len(root.times)) + "x makan sehari"
+                adaptive_height: True
+                theme_text_color: "Custom"
+                text_color: "#A18D7A"
+
+        MDIconButton:
+            icon: "delete-outline"
+            pos_hint: {"center_y": .5}
+            theme_icon_color: "Custom"
+            icon_color: app.theme_cls.errorColor
+            on_release: root.screen.delete_schedule(root.index)
+
+    MDGridLayout:
+        id: chips
+        cols: 3
+        adaptive_height: True
+        spacing: dp(8)
+
+
+# ======================= Modal tambah jadwal =======================
+<AddScheduleModal>:
+    size_hint: .92, None
+    height: dp(500)
+    auto_dismiss: False
+    background: ""
+    background_color: 0, 0, 0, 0
+    overlay_color: 0, 0, 0, .45
+
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: dp(24)
+        spacing: dp(16)
+        radius: [dp(28)]
+        theme_bg_color: "Custom"
+        md_bg_color: "#FFF9F0"
+
+        MDLabel:
+            text: "Tambah Jadwal Makan"
+            font_style: "Title"
+            role: "large"
+            adaptive_height: True
+            theme_text_color: "Custom"
+            text_color: "#49372D"
+
+        MDTextField:
+            id: name_input
+            mode: "outlined"
+            text: "Jadwal Makan"
+            theme_line_color: "Custom"
+            line_color_normal: "#E8D8C5"
+            line_color_focus: "#D87945"
+            theme_text_color: "Custom"
+            text_color_normal: "#49372D"
+            text_color_focus: "#49372D"
+
+            MDTextFieldHintText:
+                text: "Nama jadwal"
+                theme_text_color: "Custom"
+                text_color_normal: "#A18D7A"
+                text_color_focus: "#D87945"
+
+        MDTextField:
+            id: frequency_input
+            mode: "outlined"
+            text: "3"
+            input_filter: "int"
+            on_text: root.update_times(self.text)
+            theme_line_color: "Custom"
+            line_color_normal: "#E8D8C5"
+            line_color_focus: "#D87945"
+            theme_text_color: "Custom"
+            text_color_normal: "#49372D"
+            text_color_focus: "#49372D"
+
+            MDTextFieldHintText:
+                text: "Frekuensi makan per hari (1-5)"
+                theme_text_color: "Custom"
+                text_color_normal: "#A18D7A"
+                text_color_focus: "#D87945"
+
+        MDTextField:
+            id: time_input
+            mode: "outlined"
+            theme_line_color: "Custom"
+            line_color_normal: "#E8D8C5"
+            line_color_focus: "#D87945"
+            theme_text_color: "Custom"
+            text_color_normal: "#49372D"
+            text_color_focus: "#49372D"
+
+            MDTextFieldHintText:
+                text: "Jam (contoh: 07:00, 12:00, 19:00)"
+                theme_text_color: "Custom"
+                text_color_normal: "#A18D7A"
+                text_color_focus: "#D87945"
+
+        MDLabel:
+            text: "Waktu otomatis dapat kamu ubah secara manual."
+            adaptive_height: True
+            theme_text_color: "Custom"
+            text_color: "#A18D7A"
+
+        MDLabel:
+            id: error_label
+            text: ""
+            theme_text_color: "Custom"
+            text_color: app.theme_cls.errorColor
+            adaptive_height: True
+
+        MDBoxLayout:
+            adaptive_height: True
+            spacing: dp(8)
+
+            Widget:
+
+            MDButton:
+                style: "text"
+                on_release: root.dismiss()
+
+                MDButtonText:
+                    text: "Batal"
+                    theme_text_color: "Custom"
+                    text_color: "#D87945"
+
+            MDButton:
+                style: "filled"
+                theme_bg_color: "Custom"
+                md_bg_color: "#D87945"
+                on_release: root.submit()
+
+                MDButtonIcon:
+                    icon: "check"
+                    theme_icon_color: "Custom"
+                    icon_color: "#FFFFFF"
+
+                MDButtonText:
+                    text: "Simpan"
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+
+# ======================= Halaman utama =======================
+<Time>:
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: dp(16)
+        padding: dp(16)
+        theme_bg_color: "Custom"
+        md_bg_color: "#FFF9F0"
+
+        # ===== Header =====
+        MDBoxLayout:
+            adaptive_height: True
+            padding: dp(20)
+            spacing: dp(12)
+            radius: [dp(28)]
+            theme_bg_color: "Custom"
+            md_bg_color: "#F5EBDD"
+
+            MDBoxLayout:
+                orientation: "vertical"
+                adaptive_height: True
+                spacing: dp(4)
+                pos_hint: {"center_y": .5}
+
+                MDLabel:
+                    text: "Jadwal Makan"
+                    font_style: "Headline"
+                    role: "small"
+                    adaptive_height: True
+                    theme_text_color: "Custom"
+                    text_color: "#49372D"
+
+                MDLabel:
+                    text: "Atur pengingat waktu makan harianmu"
+                    adaptive_height: True
+                    theme_text_color: "Custom"
+                    text_color: "#A18D7A"
+
+            MDButton:
+                style: "filled"
+                theme_bg_color: "Custom"
+                md_bg_color: "#D87945"
+                pos_hint: {"center_y": .5}
+                on_release: root.open_add_modal()
+
+                MDButtonIcon:
+                    icon: "plus"
+                    theme_icon_color: "Custom"
+                    icon_color: "#FFFFFF"
+
+                MDButtonText:
+                    text: "Tambah"
+                    theme_text_color: "Custom"
+                    text_color: "#FFFFFF"
+
+        # ===== Tampilan kosong (tinggi 0 kalau sudah ada jadwal) =====
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint_y: None
+            height: self.minimum_height if root.empty else 0
+            opacity: 1 if root.empty else 0
+            padding: [0, dp(48), 0, 0]
+            spacing: dp(10)
+
+            MDIcon:
+                icon: "silverware-fork-knife"
+                halign: "center"
+                pos_hint: {"center_x": .5}
+                adaptive_height: True
+                theme_text_color: "Custom"
+                text_color: "#E8D8C5"
+                theme_font_size: "Custom"
+                font_size: dp(72)
+
+            MDLabel:
+                text: "Belum ada jadwal makan"
+                halign: "center"
+                font_style: "Title"
+                role: "medium"
+                adaptive_height: True
+                theme_text_color: "Custom"
+                text_color: "#49372D"
+
+            MDLabel:
+                text: "Tekan tombol Tambah untuk membuat jadwal pertamamu"
+                halign: "center"
+                adaptive_height: True
+                theme_text_color: "Custom"
+                text_color: "#A18D7A"
+
+        MDScrollView:
+            do_scroll_x: False
+            bar_width: 0
+
+            MDBoxLayout:
+                id: schedule_list
+                orientation: "vertical"
+                spacing: dp(12)
+                adaptive_height: True
+                padding: [0, 0, 0, dp(24)]
