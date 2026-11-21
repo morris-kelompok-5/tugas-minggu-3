@@ -4,7 +4,25 @@
 
 JAGJAG adalah aplikasi Android berbasis Python, Kivy, dan KivyMD untuk merekam rute GPS, melihat riwayat perjalanan di peta, menampilkan cuaca BMKG, mengelola profil, serta membuat jadwal pengingat makan.
 
-README ini menjelaskan struktur project dan alur utama agar project lebih mudah dipelajari dan dipresentasikan.
+README ini menjelaskan struktur project, alur utama, cara menjalankan versi PC, dan cara melihat error di HP.
+
+## 👨‍💻 Tim Developer
+
+| Nama | Peran |
+|---|---|
+| Ridhwan Sulaiman Suzana | Programmer Project |
+| Arif | Flowchart |
+| Dinarvadila | Poster |
+| Ryokelviano | QA Testing APK |
+| Naufal | Dokumentasi README |
+| Vania Gita Puji Astuik | Edit dan Video |
+
+**Project:** JAGJAG – Health & Fitness Tracker  
+**Kategori:** Health & Fitness Application  
+**Status:** Development  
+**Version:** 1.0.0
+
+---
 
 ## 🎯 Tujuan Proyek
 
@@ -22,6 +40,7 @@ README ini menjelaskan struktur project dan alur utama agar project lebih mudah 
 - **Cuaca BMKG**, mencakup kondisi saat ini dan prakiraan, dengan cache saat koneksi tidak tersedia.
 - **Profil pengguna** berupa nama, tanggal lahir, berat, dan tinggi, beserta perhitungan umur dan IMT.
 - **Jadwal pengingat makan** dengan beberapa waktu yang diteruskan ke aplikasi alarm Android.
+- **Check bug** di dalam aplikasi: melihat log dan laporan error dalam bentuk JSON, lalu menyalin atau mengirimnya.
 
 ---
 
@@ -34,7 +53,7 @@ README ini menjelaskan struktur project dan alur utama agar project lebih mudah 
 - BMKG API untuk prakiraan cuaca.
 - JSON dan JSON Lines untuk penyimpanan lokal.
 
-Konfigurasi Android seperti nama paket, dependensi, izin, arsitektur, dan service terdapat di [`buildozer.spec`](buildozer.spec).
+Konfigurasi Android seperti nama paket, versi Python, dependensi, izin, arsitektur, API target, dan service terdapat di [`buildozer.spec`](buildozer.spec).
 
 ---
 
@@ -43,35 +62,36 @@ Konfigurasi Android seperti nama paket, dependensi, izin, arsitektur, dan servic
 ```text
 .
 ├── main.py                         # Titik masuk aplikasi
+├── requirements.txt                # Daftar library untuk menjalankan di PC
 ├── buildozer.spec                  # Konfigurasi build APK
 ├── extra_manifest_application_arguments.xml
 ├── assets/                         # Ikon, font, dan gambar splash
 ├── data/                           # Data contoh/lokal desktop
-├── cache/                          # Cache tile peta
+├── cache/                          # Cache tile peta (desktop)
 └── content/
     ├── _components/                # Komponen bersama, termasuk navbar
-    ├── config/                     # Konfigurasi tampilan desktop
+    ├── config/                     # Konfigurasi jendela dan keyboard
     ├── page/
     │   ├── Manager/                # Screen manager dan navigasi
     │   ├── Home/                   # Beranda dan cuaca
     │   ├── Map/                    # Peta riwayat
     │   ├── Record/                 # Perekaman GPS langsung
     │   ├── Time/                   # Jadwal dan alarm
-    │   └── Profile/                # Profil dan informasi tubuh
-    ├── service/                    # GPS, cuaca, profil, alarm, riwayat
-    └── util/                       # Path, inset, dan perhitungan
+    │   └── Profile/                # Profil, pengaturan, dan Check bug
+    ├── service/                    # GPS, cuaca, profil, alarm, riwayat, laporan bug
+    └── util/                       # Path dan perhitungan
 ```
 
-Umumnya setiap halaman memiliki `page.py` untuk perilaku/data dan `page.kv` untuk tampilan. `Manager` memasang semua halaman ke `MDScreenManager`; navbar mengubah screen aktif.
+Umumnya setiap halaman memiliki `page.py` untuk perilaku/data dan `page.kv` untuk tampilan. `Manager` mengatur `MDScreenManager`; navbar mengubah screen aktif.
 
 ## Alur aplikasi
 
-1. `main.py` memuat konfigurasi dan membuat `MainApp`, turunan `MDApp`.
-2. `MainApp.build()` mengatur tema, membaca inset layar, lalu membuat `Manager` sebagai root UI.
-3. `Manager` menampilkan lima halaman dan menghubungkan navbar dengan `MDScreenManager`.
+1. `main.py` memasang pencatat log (`bug_report`), memuat konfigurasi, lalu membuat `MainApp`, turunan `MDApp`.
+2. `MainApp.build()` mengatur tema, lalu membuat `Manager` sebagai root UI.
+3. `Manager` hanya membuat halaman **Home** saat start. Halaman Map, Record, Time, dan Profile dibuat saat pertama kali dibuka lewat navbar, supaya startup ringan.
 4. Di Android, aplikasi meminta izin lokasi dan notifikasi (Android 13 ke atas).
 5. Pengguna berpindah antara Home, Map, Record, Time, dan Profile melalui navbar.
-6. Jika startup gagal, `main.py` menyimpan traceback ke `crash.log` dan mencoba menampilkan layar error.
+6. Jika startup gagal, `main.py` menyimpan traceback ke `bug_reports.json` dan menampilkan layar error berisi traceback tersebut.
 
 ## Alur rekaman GPS
 
@@ -113,7 +133,7 @@ Di desktop, `TrackManager` menjalankan tracker sebagai proses terpisah. `tracker
 
 ### Home
 
-`content/page/Home/page.py` dan `page.kv` menampilkan cuaca sekarang dan prakiraan. `WeatherManager` mengambil data dari BMKG pada thread terpisah dan menggunakan cache bila jaringan gagal. Saat profil belum tersedia, Home meminta pengguna membuat profil.
+`content/page/Home/page.py` dan `page.kv` menampilkan cuaca sekarang dan prakiraan. `WeatherManager` mengambil data dari BMKG pada thread terpisah dan menggunakan cache bila jaringan gagal. Saat profil belum tersedia, Home meminta pengguna membuat profil. Kolom tanggal lahir membuka date picker lewat ketukan (bukan lewat fokus), karena kolom `readonly` tidak bisa menerima fokus di Android.
 
 ### Map
 
@@ -129,7 +149,12 @@ Di desktop, `TrackManager` menjalankan tracker sebagai proses terpisah. `tracker
 
 ### Profile
 
-`content/page/Profile/page.py` dan `page.kv` menampilkan serta mengedit nama, tanggal lahir, berat, dan tinggi. `Profiles` memvalidasi dan menyimpan data; `BodyMath` menghitung umur, IMT, dan kategori sesuai aturan yang tertulis di kode.
+`content/page/Profile/page.py` dan `page.kv` menampilkan nama, tanggal lahir, berat, tinggi, umur, IMT, dan kategorinya. `Profiles` memvalidasi dan menyimpan data; `BodyMath` menghitung umur, IMT, dan kategori sesuai aturan yang tertulis di kode.
+
+Ikon pengaturan (roda gigi) membuka menu dengan dua pilihan:
+
+- **Edit user**: mengubah nama, tanggal lahir, berat, dan tinggi.
+- **Check bug**: menampilkan laporan dalam bentuk JSON yang bisa digeser. Tombol **Salin** menyalin isinya, **Kirim** membuka share sheet Android, ikon tong sampah menghapus laporan, dan **Tutup** menutup jendela.
 
 ## Layanan dan utilitas
 
@@ -142,10 +167,10 @@ Di desktop, `TrackManager` menjalankan tracker sebagai proses terpisah. `tracker
 | `content/service/profile_manager.py` | Membaca, memvalidasi, membuat, dan memperbarui profil. |
 | `content/service/alarm_manager.py` | Mengantrekan pembuatan/pembatalan alarm Android. |
 | `content/service/compass_manager.py` | Membaca dan menghaluskan heading dari sensor Android. |
+| `content/service/bug_report.py` | Menangkap log dan error (termasuk error di thread latar), menyimpan laporan JSON, serta menyalin dan mengirim laporan. |
 | `content/util/paths.py` | Path data, aset, dan file UI; baca/tulis JSON. |
 | `content/util/math_location.py` | Validasi koordinat dan perhitungan jarak rute. |
 | `content/util/math_body_health.py` | Perhitungan umur, IMT, dan kategori profil. |
-| `content/util/insets.py` | Membaca inset status/navigation bar Android. |
 
 ## Penyimpanan data
 
@@ -158,56 +183,124 @@ Di desktop, `TrackManager` menjalankan tracker sebagai proses terpisah. `tracker
 | `history.json` | Ringkasan aktivitas, waktu, jarak, titik awal/akhir, serta segmen koordinat. |
 | `track.jsonl` | Log append-only, satu baris JSON per titik GPS atau event jeda/lanjut. |
 | `weather_cache.json` | Cache cuaca di direktori privat aplikasi. |
+| `bug_reports.json` | Maksimal 5 laporan crash/error terakhir beserta 80 baris log sebelum error. Di Android berada di direktori privat aplikasi, di desktop di root project. |
 
 Data dalam `data/` repository adalah data lokal/contoh untuk pengembangan. Data aktif Android berada di sandbox privat aplikasi perangkat.
 
-## Menjalankan di desktop
+---
 
-Mode desktop berguna untuk mempelajari tampilan dan alur; lokasi disimulasikan. Alarm, izin Android, service latar belakang, dan sensor kompas tidak sepenuhnya tersedia di desktop.
+## 💻 Menjalankan Versi PC
 
-Contoh PowerShell dari root project (bila Python 3.12 sudah terpasang):
+Versi PC berguna untuk mencoba tampilan dan alur aplikasi tanpa HP. Lokasi GPS disimulasikan di sekitar Bandung.
+
+### Yang dibutuhkan
+
+- **Python 3.11 atau lebih baru.** Project ini sudah dijalankan di Python 3.13.
+- **Koneksi internet**, untuk cuaca BMKG dan tile peta.
+- **Git** (opsional, untuk mengunduh project dengan `git clone`).
+
+Saat memasang Python di Windows, centang **Add python.exe to PATH**. Cek dengan:
+
+```powershell
+python --version
+```
+
+### 1. Ambil project
+
+Dengan Git:
+
+```powershell
+git clone https://github.com/IsekaiRid/tugas-minggu-3.git
+cd tugas-minggu-3
+```
+
+Atau unduh ZIP dari GitHub (**Code → Download ZIP**), ekstrak, lalu buka foldernya. Pastikan kamu berada di folder yang berisi `main.py` dan `requirements.txt`. Jika project ada di dalam folder lagi, masuk ke folder itu dengan `cd`.
+
+### 2. Buat virtual environment
+
+Windows (PowerShell):
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+```
+
+Linux / macOS:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Jika berhasil, awal baris terminal berubah menjadi `(.venv)`.
+
+### 3. Pasang library
+
+```powershell
 python -m pip install --upgrade pip
-python -m pip install kivy==2.3.1 kivymd==2.0.0 kivy-garden.mapview requests pillow
+python -m pip install -r requirements.txt
+```
+
+Proses ini mengunduh Kivy, KivyMD, MapView, dan library pendukung. Tunggu sampai selesai tanpa pesan `ERROR`.
+
+### 4. Jalankan aplikasi
+
+```powershell
 python main.py
 ```
 
-Pilih Record untuk melihat jalur simulasi. Hentikan rekaman, lalu buka Map untuk melihat rute di riwayat. Jika PowerShell memblokir aktivasi, jalankan `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` pada jendela tersebut dan ulangi aktivasi. Bila instalasi Kivy gagal, periksa dukungan wheel untuk versi Python yang digunakan.
+Jendela aplikasi akan terbuka dengan ukuran layar HP (360 × 640) dan tidak bisa diubah ukurannya.
 
-## Membangun APK Android
+### Cara mencoba fitur
 
-Buildozer digunakan di Linux/macOS. Pada Windows gunakan WSL2 + Ubuntu. Salin project ke filesystem Linux (misalnya `~/jagjag`), bukan membangun langsung dari `/mnt/c`; lihat [panduan instalasi resmi Buildozer](https://buildozer.readthedocs.io/en/latest/installation/).
+1. **Buat Profil.** Saat pertama kali dibuka, formulir muncul otomatis. Isi nama, tanggal lahir (ketuk kolomnya untuk membuka kalender), berat, dan tinggi, lalu tekan **Simpan**.
+2. **Home.** Menampilkan cuaca sekarang dan prakiraan 24 jam. Tekan ikon refresh untuk memuat ulang.
+3. **Record.** Tekan mulai untuk melihat jalur simulasi berjalan di peta. Tekan stop untuk menyimpan rute. Rute yang terlalu pendek tidak disimpan.
+4. **Map.** Menampilkan riwayat rute yang sudah disimpan. Rute terbaru paling jelas.
+5. **Time.** Tambah jadwal pengingat makan. Alarm Android dilewati di PC, jadi hanya jadwalnya yang tersimpan.
+6. **Profile.** Tekan ikon roda gigi lalu pilih **Edit user** atau **Check bug**.
 
-Contoh alur di Ubuntu/WSL2:
+### Yang tidak tersedia di PC
 
-```bash
-# Dari Ubuntu; sesuaikan path Windows bila folder project berbeda
-cp -r "/mnt/c/Morris Tugas Baru/tugas-minggu-3/tugas-minggu-3" ~/jagjag
-cd ~/jagjag
+- Alarm Android dan notifikasi.
+- Izin lokasi dan GPS asli (koordinat disimulasikan).
+- Sensor kompas dan mode Heading-up.
+- Tombol **Kirim** di Check bug (tombol **Salin** tetap berfungsi).
 
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install buildozer setuptools cython==0.29.34
-buildozer -v android debug
-```
+### Masalah yang sering terjadi
 
-Pasang dependensi sistem dan Java mengikuti panduan Buildozer untuk versi Ubuntu yang digunakan. Build pertama mengunduh Android SDK/NDK dan komponen lain, sehingga dapat memerlukan beberapa GB ruang serta waktu. Terima lisensi SDK jika diminta. APK debug biasanya muncul di `bin/`. Salin APK ke HP lalu buka untuk memasang; Android mungkin meminta izin instalasi dari sumber tersebut. WSL tidak mengakses USB secara langsung, jadi untuk memakai ADB jalankan dari Windows.
+| Masalah | Solusi |
+|---|---|
+| `python` tidak dikenali | Pasang Python dan centang **Add to PATH**, lalu buka terminal baru. Di Windows bisa juga memakai `py -m venv .venv`. |
+| Aktivasi venv diblokir PowerShell | Jalankan `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, lalu ulangi perintah aktivasi. |
+| `pip install` Kivy gagal | Periksa versi Python dengan `python --version`. Pakai 3.11 sampai 3.13, lalu buat ulang `.venv`. |
+| `ModuleNotFoundError` saat `python main.py` | Venv belum aktif atau library belum terpasang. Aktifkan `.venv`, lalu ulangi langkah 3. |
+| Jendela tidak muncul atau error OpenGL | Perbarui driver kartu grafis. Di Windows coba `$env:KIVY_GL_BACKEND="angle_sdl2"` sebelum `python main.py`. |
+| Peta kosong atau cuaca gagal dimuat | Periksa koneksi internet. Cuaca memakai cache bila pernah berhasil dimuat sebelumnya. |
+| Ingin memunculkan formulir Buat Profil lagi | Hapus file `data/profiles.json`, lalu jalankan ulang. |
+| Ada error yang tidak jelas | Lihat pesan di terminal, atau buka **Profile → roda gigi → Check bug**. Laporan tersimpan di `bug_reports.json` di folder project. |
 
-## 👨‍💻 Developer
+---
 
-Nama: Burger Kill
+## 📦 Membangun APK
 
-Project:  – Health & Fitness Tracker
+File dan panduan build APK (Google Colab) disertakan terpisah.
 
-Kategori: Health & Fitness Application
+---
 
-Status: Development
+## 🐞 Melihat error di HP
 
-Version: 1.0.0
+Urutan dari yang paling mudah:
+
+1. **Check bug di aplikasi.** Buka **Profile → ikon roda gigi → Check bug**. Isinya JSON dengan info perangkat, laporan crash/error tersimpan, dan 500 baris log sesi ini. Gunakan **Salin** atau **Kirim** untuk mengirimnya ke developer.
+2. **Layar error saat start.** Jika aplikasi gagal start, `main.py` menampilkan layar hitam berisi traceback. Foto layar itu, lalu buka lagi aplikasinya: laporan yang sama juga tersimpan dan bisa dilihat di Check bug.
+3. **Bug report bawaan Android** (tanpa PC), untuk kasus aplikasi tertutup sebelum Python sempat jalan. Buka **Pengaturan → Opsi pengembang → Ambil laporan bug**, bagikan file zip hasilnya, lalu cari kata `python`, `AndroidRuntime`, atau nama paket `org.isekairid.jagjag`.
+4. **ADB** dari PC (USB atau Wireless debugging):
+   ```text
+   adb logcat -c
+   adb logcat -s python AndroidRuntime
+   ```
+   Jalankan, buka aplikasi sampai error muncul, lalu salin hasilnya.
 
 ---
 
