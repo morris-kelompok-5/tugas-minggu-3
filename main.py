@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 import traceback
 
 
@@ -10,12 +11,29 @@ def _crash_file():
 
 def _save_crash(text):
     print(text)
+
     try:
-        with open(_crash_file(), "w", encoding="utf-8") as f:
-            f.write(text)
+        from content.service import crash_log
+        crash_log.append(text)
+        return
     except Exception:
         pass
 
+    try:
+        with open(_crash_file(), "a", encoding="utf-8") as f:
+            f.write(text + "\n\n")
+    except Exception:
+        pass
+
+
+def _thread_hook(args):
+    text = "".join(
+        traceback.format_exception(args.exc_type, args.exc_value, args.exc_traceback)
+    )
+    _save_crash("[THREAD]\n" + text)
+
+
+threading.excepthook = _thread_hook
 
 def _show_crash(text):
     from kivy.app import App

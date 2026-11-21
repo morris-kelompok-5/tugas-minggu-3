@@ -1,17 +1,26 @@
 from datetime import datetime
 
+from kivy.clock import Clock
 from kivy.lang import Builder
-from kivy.metrics import dp
+from kivy.metrics import dp, sp
+from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.button import MDButton, MDButtonText
+from kivymd.uix.button import MDButton, MDButtonText, MDIconButton
 from kivymd.uix.dialog import (
     MDDialog,
     MDDialogHeadlineText,
     MDDialogContentContainer,
     MDDialogButtonContainer,
 )
+from kivymd.uix.list import (
+    MDListItem,
+    MDListItemLeadingIcon,
+    MDListItemHeadlineText,
+    MDListItemSupportingText,
+)
 from kivymd.uix.screen import MDScreen
+from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.textfield import (
     MDTextField,
     MDTextFieldHintText,
@@ -19,6 +28,7 @@ from kivymd.uix.textfield import (
 )
 
 from content.util.paths import Paths
+from content.service import crash_log
 from content.service.profile_manager import Profiles
 from content.util.math_body_health import BodyMath
 
@@ -57,6 +67,132 @@ class Profile(MDScreen):
     def show_result(self, imt, kategori):
         self.ids.imt.text = str(imt)
         self.ids.kategori.text = f"Status: {kategori}"
+
+    # ---------- modal pengaturan ----------
+    def _open_after_close(self, action):
+        if self.dialog:
+            self.dialog.dismiss()
+        Clock.schedule_once(lambda dt: action(), 0.25)
+
+    def open_settings_modal(self):
+        jumlah = len(crash_log.read_entries())
+        ringkas = (
+            f"{jumlah} error tercatat" if jumlah else "Belum ada error tercatat"
+        )
+
+        self.dialog = MDDialog(
+            MDDialogHeadlineText(text="Pengaturan"),
+            MDDialogContentContainer(
+                MDListItem(
+                    MDListItemLeadingIcon(icon="account-edit-outline"),
+                    MDListItemHeadlineText(text="Edit user"),
+                    MDListItemSupportingText(
+                        text="Ubah nama, tanggal lahir, berat, dan tinggi"
+                    ),
+                    on_release=lambda *_: self._open_after_close(self.open_edit_modal),
+                ),
+                MDListItem(
+                    MDListItemLeadingIcon(icon="bug-outline"),
+                    MDListItemHeadlineText(text="Crash log"),
+                    MDListItemSupportingText(text=ringkas),
+                    on_release=lambda *_: self._open_after_close(self.open_crash_modal),
+                ),
+                orientation="vertical",
+            ),
+        )
+        self.dialog.open()
+
+    # ---------- modal crash log ----------
+    def _make_scroller(self, text):
+        scroll = MDScrollView(
+            size_hint_y=None,
+            height=dp(340),
+            do_scroll_x=False,
+            bar_width=dp(3),
+        )
+        box = MDBoxLayout(orientation="vertical", adaptive_height=True)
+
+        lines = text.splitlines() or [""]
+        for i in range(0, len(lines), 40):
+            label = Label(
+                text="\n".join(lines[i:i + 40]),
+                font_size=sp(11),
+                color=(0.29, 0.22, 0.17, 1),
+                size_hint_y=None,
+                halign="left",
+                valign="top",
+            )
+            label.bind(width=lambda w, v: setattr(w, "text_size", (v, None)))
+            label.bind(texture_size=lambda w, v: setattr(w, "height", v[1]))
+            box.add_widget(label)
+
+        scroll.add_widget(box)
+        return scroll
+
+    def open_crash_modal(self):
+        entries = crash_log.read_entries()
+        self._crash_count = len(entries)
+        self._crash_text = "\n\n".join(reversed(entries))
+
+        isi = self._crash_text or "Belum ada error yang tercatat."
+        self._crash_title = MDDialogHeadlineText(
+            text=f"Crash log ({self._crash_count})"
+        )
+
+        self.dialog = MDDialog(
+            self._crash_title,
+            MDDialogContentContainer(
+                self._make_scroller(isi),
+                orientation="vertical",
+            ),
+            MDDialogButtonContainer(
+                MDIconButton(
+                    icon="delete-outline",
+                    style="standard",
+                    on_release=lambda *_: self._clear_crash(),
+                ),
+                Widget(),
+                MDButton(
+                    MDButtonText(text="Salin"),
+                    style="text",
+                    on_release=lambda *_: self._copy_crash(),
+                ),
+                MDButton(
+                    MDButtonText(text="Kirim"),
+                    style="text",
+                    on_release=lambda *_: self._share_crash(),
+                ),
+                MDButton(
+                    MDButtonText(text="Tutup"),
+                    style="text",
+                    on_release=lambda *_: self.dialog.dismiss(),
+                ),
+                spacing=dp(4),
+            ),
+        )
+        self.dialog.open()
+
+    def _set_crash_title(self, extra=""):
+        base = f"Crash log ({self._crash_count})"
+        self._crash_title.text = f"{base} · {extra}" if extra else base
+
+    def _copy_crash(self):
+        if not self._crash_text:
+            self._set_crash_title("kosong")
+            return
+        ok = crash_log.copy_text(self._crash_text)
+        self._set_crash_title("tersalin" if ok else "gagal menyalin")
+
+    def _share_crash(self):
+        if not self._crash_text:
+            self._set_crash_title("kosong")
+            return
+        ok = crash_log.share_text(self._crash_text)
+        self._set_crash_title("" if ok else "gagal mengirim")
+
+    def _clear_crash(self):
+        crash_log.clear()
+        self._open_after_close(self.open_crash_modal)
 
     # ---------- modal edit ----------
     def _make_field(self, hint, text="", helper="", input_filter=None):

@@ -10,6 +10,7 @@ README ini menjelaskan struktur project, alur utama, cara menjalankan versi PC, 
 
 | Nama | Peran |
 |---|---|
+| Refly | Project Manager dan Rancangan Konsep |
 | Ridhwan Sulaiman Suzana | Programmer Project |
 | Arif | Flowchart |
 | Dinarvadila | Poster |
